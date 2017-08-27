@@ -6,6 +6,35 @@
 #include <clasp/core/mpPackage.h>
 #include <clasp/core/lispStream.h>
 
+// from llvm/lib/Support/Unix/Threading.inc
+#if defined(__linux__)
+#include <sys/syscall.h> // For syscall codes
+#include <unistd.h>      // For syscall()
+#endif
+
+uint64_t get_threadid() {
+#if defined(__APPLE__)
+  // Calling "mach_thread_self()" bumps the reference count on the thread
+  // port, so we need to deallocate it. mach_task_self() doesn't bump the ref
+  // count.
+  thread_port_t Self = mach_thread_self();
+  mach_port_deallocate(mach_task_self(), Self);
+  return Self;
+#elif defined(__FreeBSD__)
+  return uint64_t(pthread_getthreadid_np());
+#elif defined(__NetBSD__)
+  return uint64_t(_lwp_self());
+#elif defined(__ANDROID__)
+  return uint64_t(gettid());
+#elif defined(__linux__)
+  return uint64_t(syscall(SYS_gettid));
+#elif defined(LLVM_ON_WIN32)
+  return uint64_t(::GetCurrentThreadId());
+#else
+  return uint64_t(pthread_self());
+#endif
+}
+
 
 THREAD_LOCAL core::ThreadLocalState* my_thread;
 
@@ -40,7 +69,7 @@ ThreadLocalState::ThreadLocalState(void* stack_top) :  _DisableInterrupts(false)
 #ifdef _TARGET_OS_DARWIN
   this->_Tid = 0;
 #else
-  this->_Tid = gettid();
+  this->_Tid = get_threadid();
 #endif
   this->_InvocationHistoryStackTop = NULL;
   this->_BufferStr8NsPool.reset_(); // Can't use _Nil<core::T_O>(); - too early
