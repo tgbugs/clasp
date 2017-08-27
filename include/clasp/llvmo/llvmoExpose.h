@@ -63,7 +63,7 @@ THE SOFTWARE.
 #include <llvm/ExecutionEngine/Orc/IRTransformLayer.h>
 #include <llvm/ExecutionEngine/Orc/LambdaResolver.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
-#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
+//#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 //#include "llvm/Support/IRBuilder.h"
 
 #include <stdio.h>
@@ -4354,7 +4354,7 @@ namespace llvmo {
     NotifyObjectLoadedT(ClaspJIT_O &k) : _TheJIT(k) {}
 
       template <typename ObjListT>
-        void operator()(ObjectLinkingLayerBase::ObjSetHandleT H,
+        void operator()(RTDyldObjectLinkingLayerBase::ObjHandleT H,
                         const ObjListT &Objects,
                         const LoadedObjInfoListT &Infos) const {
         for (unsigned i = 0; i < Objects.size(); ++i) {
